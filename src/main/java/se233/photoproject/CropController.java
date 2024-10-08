@@ -8,6 +8,7 @@ import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -24,6 +25,7 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CropController {
@@ -33,6 +35,7 @@ public class CropController {
     private Stage primaryStage;
     private File imageFile;
     private final List<BufferedImage> croppedImages;
+    private final List<CheckBox> checkBoxes = new ArrayList<>();
     private final CropCallback cropCallback;
 
     public CropController(File imageFile, List<BufferedImage> croppedImages, CropCallback cropCallback) {
@@ -146,6 +149,8 @@ public class CropController {
         graphics.dispose();
 
         croppedImages.add(bufImageRGB);
+        CheckBox checkBox = new CheckBox("Image " + croppedImages.size());
+        checkBoxes.add(checkBox);
     }
 
     private void loadImage(File file) {
@@ -180,21 +185,14 @@ public class CropController {
         private void onMousePressed(MouseEvent event) {
             if (event.isSecondaryButtonDown()) return;
 
-            rect.setX(0);
-            rect.setY(0);
+            rect.setX(event.getX());
+            rect.setY(event.getY());
             rect.setWidth(0);
             rect.setHeight(0);
-            group.getChildren().remove(rect);
+            group.getChildren().add(rect);
 
             dragContext.mouseAnchorX = event.getX();
             dragContext.mouseAnchorY = event.getY();
-
-            rect.setX(dragContext.mouseAnchorX);
-            rect.setY(dragContext.mouseAnchorY);
-            rect.setWidth(0);
-            rect.setHeight(0);
-
-            group.getChildren().add(rect);
         }
 
         private void onMouseDragged(MouseEvent event) {
@@ -227,4 +225,6 @@ public class CropController {
             public double mouseAnchorY;
         }
     }
-} //current time 1:06 pm
+}
+
+//as of now it is 3:43pm october 8th, 2024. I just checked over the code and it works fine. Tell me if anything is wrong with it or sumn

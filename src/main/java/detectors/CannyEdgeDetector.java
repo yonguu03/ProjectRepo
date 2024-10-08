@@ -6,14 +6,13 @@ import java.awt.image.Kernel;
 
 public class CannyEdgeDetector {
 
-    // Canny Filter Implementation
-    public BufferedImage applyCannyFilter(BufferedImage grayImage) {
+    public BufferedImage applyCannyFilter(BufferedImage image, int strength) {
         // Step 1: Apply Gaussian Blur
-        BufferedImage blurredImage = applyGaussianBlur(grayImage);
+        BufferedImage blurredImage = applyGaussianBlur(image, strength);
 
         // Step 2: Calculate Gradient Intensity and Direction
-        BufferedImage gradientMagnitude = new BufferedImage(grayImage.getWidth(), grayImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
-        BufferedImage gradientDirection = new BufferedImage(grayImage.getWidth(), grayImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        BufferedImage gradientMagnitude = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        BufferedImage gradientDirection = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
 
         calculateGradients(blurredImage, gradientMagnitude, gradientDirection);
 
@@ -21,19 +20,28 @@ public class CannyEdgeDetector {
         BufferedImage suppressedImage = nonMaxSuppression(gradientMagnitude, gradientDirection);
 
         // Step 4: Double Thresholding
-        BufferedImage thresholdedImage = doubleThreshold(suppressedImage, 50, 150);
+        BufferedImage thresholdedImage = doubleThreshold(suppressedImage, 50 * strength / 100, 150 * strength / 100);
 
         // Step 5: Edge Tracking by Hysteresis
+        BufferedImage edgeImage = edgeTracking(thresholdedImage);
 
-        return edgeTracking(thresholdedImage);
+        // Set background to white
+        for (int x = 0; x < edgeImage.getWidth(); x++) {
+            for (int y = 0; y < edgeImage.getHeight(); y++) {
+                int edgeVal = edgeImage.getRaster().getSample(x, y, 0);
+                edgeImage.getRaster().setSample(x, y, 0, 255 - edgeVal);
+            }
+        }
+
+        return edgeImage;
     }
 
     // Gaussian Blur Implementation
-    private BufferedImage applyGaussianBlur(BufferedImage image) {
+    private BufferedImage applyGaussianBlur(BufferedImage image, int strength) {
         float[] gaussianKernel = {
-                1/16f, 2/16f, 1/16f,
-                2/16f, 4/16f, 2/16f,
-                1/16f, 2/16f, 1/16f
+                1f/16 * strength, 2f/16 * strength, 1f/16 * strength,
+                2f/16 * strength, 4f/16 * strength, 2f/16 * strength,
+                1f/16 * strength, 2f/16 * strength, 1f/16 * strength
         };
         ConvolveOp gaussianFilter = new ConvolveOp(new Kernel(3, 3, gaussianKernel));
         return gaussianFilter.filter(image, null);
@@ -150,7 +158,7 @@ public class CannyEdgeDetector {
                     if (isConnectedToStrongEdge(image, x, y)) {
                         finalEdges.getRaster().setSample(x, y, 0, 255); // Convert weak to strong
                     } else {
-                        finalEdges.getRaster().setSample(x, y, 0, 0); // Suppress weak edges
+                        finalEdges.getRaster().setSample(x, y, 0, 0); // Suppress weak edge
                     }
                 }
             }
@@ -171,5 +179,3 @@ public class CannyEdgeDetector {
         return false;
     }
 }
-
-//bro this one is wacky, no clue why it isn't workin properly tbh. ig i gotta take the L

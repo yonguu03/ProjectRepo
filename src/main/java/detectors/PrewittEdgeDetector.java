@@ -6,8 +6,8 @@ import java.awt.image.Kernel;
 
 public class PrewittEdgeDetector {
 
-    // Prewitt Filter Implementation
-    public BufferedImage applyPrewittFilter(BufferedImage grayImage) {
+    public BufferedImage applyPrewittFilter(BufferedImage grayImage, int strength) {
+        // Define Prewitt kernels
         float[] prewittX = {
                 -1, 0, 1,
                 -1, 0, 1,
@@ -20,37 +20,42 @@ public class PrewittEdgeDetector {
                 1,  1,  1
         };
 
-        return applyConvolution(grayImage, prewittX, prewittY);
-    }
+        // Create images to hold results of convolutions
+        BufferedImage prewittXImage = new BufferedImage(grayImage.getWidth(), grayImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        BufferedImage prewittYImage = new BufferedImage(grayImage.getWidth(), grayImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
 
-    // Canny Filter Implementation (placeholder)
-    private BufferedImage applyCannyFilter(BufferedImage grayImage) {
-        // Implement Canny edge detection
-        return grayImage; // Placeholder
-    }
+        // Create convolution operations
+        ConvolveOp convolveX = new ConvolveOp(new Kernel(3, 3, prewittX));
+        ConvolveOp convolveY = new ConvolveOp(new Kernel(3, 3, prewittY));
 
-    // Convolution Method
-    private BufferedImage applyConvolution(BufferedImage grayImage, float[] kernelX, float[] kernelY) {
-        BufferedImage resultImage = new BufferedImage(grayImage.getWidth(), grayImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        // Apply convolutions
+        convolveX.filter(grayImage, prewittXImage);
+        convolveY.filter(grayImage, prewittYImage);
 
-        // Create ConvolveOp instances for both kernels
-        ConvolveOp convolveX = new ConvolveOp(new Kernel(3, 3, kernelX));
-        ConvolveOp convolveY = new ConvolveOp(new Kernel(3, 3, kernelY));
+        // Create final image to hold edges
+        BufferedImage edgeImage = new BufferedImage(grayImage.getWidth(), grayImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
 
-        // Apply convolution for both kernels
-        BufferedImage convolvedX = convolveX.filter(grayImage, null);
-        BufferedImage convolvedY = convolveY.filter(grayImage, null);
-
-        // Calculate the magnitude of the gradient
+        // Set background to white
         for (int x = 0; x < grayImage.getWidth(); x++) {
             for (int y = 0; y < grayImage.getHeight(); y++) {
-                int valX = convolvedX.getRaster().getSample(x, y, 0);
-                int valY = convolvedY.getRaster().getSample(x, y, 0);
-                int edgeVal = (int) Math.min(255, Math.sqrt(valX * valX + valY * valY));
-                resultImage.getRaster().setSample(x, y, 0, edgeVal);
+                edgeImage.getRaster().setSample(x, y, 0, 255);
             }
         }
 
-        return resultImage;
+        // Compute the edge magnitude
+        for (int x = 0; x < grayImage.getWidth(); x++) {
+            for (int y = 0; y < grayImage.getHeight(); y++) {
+                int prewittXVal = prewittXImage.getRaster().getSample(x, y, 0);
+                int prewittYVal = prewittYImage.getRaster().getSample(x, y, 0);
+
+                // Calculate the magnitude of the gradient
+                int edgeVal = (int) Math.min(255, Math.sqrt(prewittXVal * prewittXVal + prewittYVal * prewittYVal) * strength / 100);
+
+                // Set the pixel value in the edge image
+                edgeImage.getRaster().setSample(x, y, 0, 255 - edgeVal);
+            }
+        }
+
+        return edgeImage;
     }
 }

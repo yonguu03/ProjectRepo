@@ -6,34 +6,46 @@ import java.awt.image.Kernel;
 
 public class LaplacianEdgeDetector {
 
-    // Method to apply Laplacian filter
-    public BufferedImage applyLaplacianFilter(BufferedImage grayImage) {
-        // Laplacian kernel
+    public BufferedImage applyLaplacianFilter(BufferedImage grayImage, int strength) {
+        // Define Laplacian kernel
         float[] laplacianKernel = {
                 0,  1, 0,
                 1, -4, 1,
                 0,  1, 0
         };
 
-        ConvolveOp laplacianOp = new ConvolveOp(new Kernel(3, 3, laplacianKernel));
-        BufferedImage laplacianImage = laplacianOp.filter(grayImage, null);
+        // Create image to hold result of convolution
+        BufferedImage laplacianImage = new BufferedImage(grayImage.getWidth(), grayImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
 
-        // Normalize the output image
-        return normalizeImage(laplacianImage);
-    }
+        // Create convolution operation
+        ConvolveOp convolve = new ConvolveOp(new Kernel(3, 3, laplacianKernel));
 
-    // Method to normalize the image values
-    private BufferedImage normalizeImage(BufferedImage image) {
-        BufferedImage resultImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+        // Apply convolution
+        convolve.filter(grayImage, laplacianImage);
 
-        for (int x = 0; x < image.getWidth(); x++) {
-            for (int y = 0; y < image.getHeight(); y++) {
-                int value = image.getRaster().getSample(x, y, 0);
-                // Normalize to the range [0, 255]
-                int normalizedValue = (int) Math.min(255, Math.max(0, value + 128)); // Offset for visibility
-                resultImage.getRaster().setSample(x, y, 0, normalizedValue);
+        // Create final image to hold edges
+        BufferedImage edgeImage = new BufferedImage(grayImage.getWidth(), grayImage.getHeight(), BufferedImage.TYPE_BYTE_GRAY);
+
+        // Set background to white
+        for (int x = 0; x < grayImage.getWidth(); x++) {
+            for (int y = 0; y < grayImage.getHeight(); y++) {
+                edgeImage.getRaster().setSample(x, y, 0, 255);
             }
         }
-        return resultImage;
+
+        // Compute the edge magnitude
+        for (int x = 0; x < grayImage.getWidth(); x++) {
+            for (int y = 0; y < grayImage.getHeight(); y++) {
+                int laplacianVal = laplacianImage.getRaster().getSample(x, y, 0);
+
+                // Calculate the magnitude of the gradient
+                int edgeVal = (int) Math.min(255, Math.abs(laplacianVal) * strength / 100);
+
+                // Set the pixel value in the edge image
+                edgeImage.getRaster().setSample(x, y, 0, 255 - edgeVal);
+            }
+        }
+
+        return edgeImage;
     }
 }

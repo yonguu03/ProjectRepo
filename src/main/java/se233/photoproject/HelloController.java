@@ -3,6 +3,7 @@ package se233.photoproject;
 import detectors.*;
 import javafx.fxml.FXML;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Slider;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.FileChooser;
@@ -46,6 +47,9 @@ public class HelloController {
     private ChoiceBox<String> edgeDetectionChoiceBox;
 
     @FXML
+    private Slider edgeStrengthSlider;
+
+    @FXML
     private VBox dropImagebox;
 
     @FXML
@@ -65,6 +69,17 @@ public class HelloController {
     public void initialize() {
         edgeDetectionChoiceBox.getItems().addAll("Sobel", "Prewitt", "Canny", "Gaussian", "Laplacian", "RobertsCross");
         edgeDetectionChoiceBox.setValue("Sobel");
+
+        edgeStrengthSlider.setMin(0);
+        edgeStrengthSlider.setMax(100);
+        edgeStrengthSlider.setValue(50);
+        edgeStrengthSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            System.out.println("Edge Strength: " + newValue.intValue());
+            if (originalImageView.getImage() != null) {
+                BufferedImage grayImage = convertToGrayscale(SwingFXUtils.fromFXImage(originalImageView.getImage(), null));
+                applyEdgeDetection(grayImage);
+            }
+        });
 
         keepImageButton.setVisible(false);
 
@@ -203,24 +218,25 @@ public class HelloController {
 
     private BufferedImage applyEdgeDetection(BufferedImage grayImage) {
         String selectedFilter = edgeDetectionChoiceBox.getValue();
+        int strength = (int) edgeStrengthSlider.getValue();
         switch (selectedFilter) {
             case "Sobel":
-                return new SobelEdgeDetector().applySobelFilter(grayImage);
+                return new SobelEdgeDetector().applySobelFilter(grayImage, strength);
             case "Prewitt":
-                return new PrewittEdgeDetector().applyPrewittFilter(grayImage);
+                return new PrewittEdgeDetector().applyPrewittFilter(grayImage, strength);
             case "Canny":
-                return new CannyEdgeDetector().applyCannyFilter(grayImage);
+                return new CannyEdgeDetector().applyCannyFilter(grayImage, strength);
             case "Gaussian":
-                return new GaussianEdgeDetector().detectEdges(grayImage);
+                return new GaussianEdgeDetector().applyGaussianEdgeDetection(grayImage, strength);
             case "Laplacian":
-                return new LaplacianEdgeDetector().applyLaplacianFilter(grayImage);
-            case "Roberts":
-                return new RobertsCrossEdgeDetector().applyRobertsFilter(grayImage);
+                return new LaplacianEdgeDetector().applyLaplacianFilter(grayImage, strength);
+            case "RobertsCross":
+                return new RobertsCrossEdgeDetector().applyRobertsCrossFilter(grayImage, strength);
             default:
                 return grayImage;
         }
     }
-//changed to allow it to save cropped images as well
+
     @FXML
     public void handleKeepImage() throws IOException {
         if (!processedImages.isEmpty() || !croppedImages.isEmpty()) {
@@ -251,7 +267,6 @@ public class HelloController {
             }
         }
     }
-
 
     private void saveImagesToZip(File zipFile, List<BufferedImage> images, List<BufferedImage> croppedImages) throws IOException {
         File tempFile = File.createTempFile("tempZip", ".zip");
@@ -287,7 +302,6 @@ public class HelloController {
         Files.move(tempFile.toPath(), zipFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
-
     private void bundleProcessedImagesToZip(File zipFile) throws IOException {
         try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
             for (int i = 0; i < processedImages.size(); i++) {
@@ -306,4 +320,4 @@ public class HelloController {
     }
 }
 
-//please work im literally gonna cry,
+//im actually losing my mind, i took a nap and i dreamt i was coding. like that's actually crazy.

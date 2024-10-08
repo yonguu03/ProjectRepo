@@ -4,6 +4,7 @@
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Slider?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
@@ -23,6 +24,9 @@
 
    <!-- ChoiceBox for selecting Edge Detection -->
    <ChoiceBox fx:id="edgeDetectionChoiceBox" layoutX="395.0" layoutY="335.0" prefHeight="36.0" prefWidth="176.0"/>
+
+   <!-- Slider for edge detector strength -->
+   <Slider fx:id="edgeStrengthSlider" layoutX="395.0" layoutY="380.0" prefWidth="176.0" min="0" max="100" value="50"/>
 
    <!-- Display original and processed images -->
    <ImageView fx:id="originalImageView" fitHeight="201.0" fitWidth="202.0" layoutX="382.0" layoutY="77.0"/>
